@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Heart Health Prediction 🫀</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: #f9f9fb;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 30px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .low-risk {
+            background-color: #eafaf1;
+            color: #2ecc71;
+        }
+
+        .high-risk {
+            background-color: #fcebea;
+            color: #e74c3c;
+        }
+
+        .advice {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Heart Disease Risk Assessment 🩺</h1>
+        <form id="predictionForm">
+            <div class="form-group">
+                <label for="age">Age</label>
+                <input type="number" id="age" required>
+            </div>
+
+            <div class="form-group">
+                <label for="sex">Sex</label>
+                <select id="sex" required>
+                    <option value="">Select</option>
+                    <option value="1">Male</option>
+                    <option value="0">Female</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="chestPainType">Chest Pain Type</label>
+                <select id="chestPainType" required>
+                    <option value="">Select</option>
+                    <option value="0">Typical Angina</option>
+                    <option value="1">Atypical Angina</option>
+                    <option value="2">Non-anginal Pain</option>
+                    <option value="3">Asymptomatic</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cholesterol">Cholesterol (mg/dL)</label>
+                <input type="number" id="cholesterol" required>
+            </div>
+
+            <div class="form-group">
+                <label for="maxHR">Maximum Heart Rate</label>
+                <input type="number" id="maxHR" required>
+            </div>
+
+            <div class="form-group">
+                <label for="exerciseAngina">Exercise Induced Angina</label>
+                <select id="exerciseAngina" required>
+                    <option value="">Select</option>
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
+
+            <button type="submit">🧪 Predict My Risk</button>
+        </form>
+
+        <div id="result" class="result"></div>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = {
+                Age: document.getElementById('age').value,
+                Sex: document.getElementById('sex').value,
+                ChestPainType: document.getElementById('chestPainType').value,
+                Cholesterol: document.getElementById('cholesterol').value,
+                MaxHR: document.getElementById('maxHR').value,
+                ExerciseAngina: document.getElementById('exerciseAngina').value
+            };
+
+            const resultBox = document.getElementById('result');
+            const errorBox = document.getElementById('errorMessage');
+            resultBox.style.display = 'none';
+            errorBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    errorBox.textContent = "⚠️ " + data.error;
+                    errorBox.style.display = 'block';
+                } else {
+                    resultBox.className = 'result ' + (data.prediction === 1 ? 'high-risk' : 'low-risk');
+                    resultBox.style.display = 'block';
+
+                    if (data.prediction === 1) {
+                        resultBox.innerHTML = `
+                            🔴 <strong>High Risk of Heart Disease</strong><br>
+                            🧪 Probability: ${(data.probability * 100).toFixed(1)}%
+                            <div class="advice">
+                                👨‍⚕️ <strong>Doctor's Advice:</strong><br>
+                                - Schedule a checkup with a cardiologist.<br>
+                                - Adopt a heart-healthy diet (low sodium, low cholesterol).<br>
+                                - Start light daily physical activity (as per doctor's guidance).<br>
+                                - Avoid smoking or alcohol.<br>
+                                - Monitor your blood pressure and stress levels.<br>
+                            </div>
+                        `;
+                    } else {
+                        resultBox.innerHTML = `
+                            🟢 <strong>Low Risk of Heart Disease</strong><br>
+                            ✅ Probability: ${(data.probability * 100).toFixed(1)}%<br>
+                            👍 Keep maintaining a healthy lifestyle!
+                        `;
+                    }
+                }
+            } catch (error) {
+                errorBox.textContent = "❌ Something went wrong. Please try again.";
+                errorBox.style.display = 'block';
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
